@@ -1,4 +1,5 @@
 import express from "express";
+import { MongoClient } from "mongodb";
 import {
   cartItems as cartItemsRaw,
   products as productsRaw,
@@ -7,10 +8,16 @@ import {
 let cartItems = cartItemsRaw;
 let products = productsRaw;
 
+const url = `mongodb+srv://andershsm:BJ0YCrOZ43ZfhFN0@fullstackapp.ovs7h.mongodb.net/?retryWrites=true&w=majority&appName=FullStackApp`;
+const client = new MongoClient(url);
+
 const app = express();
 app.use(express.json());
 
-app.get("/products", (req, res) => {
+app.get("/products", async (req, res) => {
+  await client.connect();
+  const db = client.db("fsa-db");
+  const products = await db.collection("products").find({}).toArray();
   res.json(products);
 });
 
