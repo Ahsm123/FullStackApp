@@ -7,19 +7,19 @@ export const cartItems = [
     id: "1",
     name: "Caputo Blå",
     price: "DKK 20.00",
-    imageName: caputoBlue,
+    imageUrl: caputoBlue,
   },
   {
     id: "2",
     name: "Caputo Rød",
     price: "DKK 20.00",
-    imageName: caputoRed,
+    imageUrl: caputoRed,
   },
   {
     id: "3",
     name: "Caputo Gul",
     price: "DKK 20.00",
-    imageName: caputoYellow,
+    imageUrl: caputoYellow,
   },
 ];
 
@@ -28,18 +28,18 @@ export const products = [
     id: "1",
     name: "Caputo Blå",
     price: "DKK 20.00",
-    imageName: caputoBlue,
+    imageUrl: caputoBlue,
   },
   {
     id: "2",
     name: "Caputo Rød",
     price: "DKK 20.00",
-    imageName: caputoRed,
+    imageUrl: caputoRed,
   },
   {
     id: "3",
     name: "Caputo Gul",
     price: "DKK 20.00",
-    imageName: caputoYellow,
+    imageUrl: caputoYellow,
   },
 ];
