@@ -3,8 +3,12 @@ import { MongoClient } from "mongodb";
 import path from "path";
 
 async function execute() {
-  const url = `mongodb+srv://andershsm:BJ0YCrOZ43ZfhFN0@fullstackapp.ovs7h.mongodb.net/?retryWrites=true&w=majority&appName=FullStackApp&tlsAllowedInvalidCertificates=true`;
-  const client = new MongoClient(url);
+  const url = `mongodb+srv://andershsm:BJ0YCrOZ43ZfhFN0@fullstackapp.ovs7h.mongodb.net/?retryWrites=true&w=majority&appName=FullStackApp`;
+  const client = new MongoClient(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    tls: true,
+  });
 
   await client.connect();
   const db = client.db("fsa-db");
