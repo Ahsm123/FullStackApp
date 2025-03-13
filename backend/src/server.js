@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb";
 import path from "path";
 
 async function execute() {
-  const url = `mongodb+srv://andershsm:BJ0YCrOZ43ZfhFN0@fullstackapp.ovs7h.mongodb.net/?retryWrites=true&w=majority&appName=FullStackApp`;
+  const url = `mongodb+srv://andershsm:BJ0YCrOZ43ZfhFN0@fullstackapp.ovs7h.mongodb.net/?retryWrites=true&w=majority&appName=FullStackApp&tlsAllowedInvalidCertificates=true`;
   const client = new MongoClient(url);
 
   await client.connect();
