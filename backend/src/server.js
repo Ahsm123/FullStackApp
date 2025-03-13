@@ -14,6 +14,13 @@ async function execute() {
 
   app.use("/images", express.static(path.join(__dirname, "../assets")));
 
+  app.use(
+    express.static(path.resolve(__dirname, "../dist"), {
+      maxAge: "1y",
+      etag: false,
+    })
+  );
+
   //GET
   app.get("/api/products", async (req, res) => {
     const products = await db.collection("products").find({}).toArray();
@@ -82,8 +89,14 @@ async function execute() {
     res.json(populatedCart);
   });
 
-  app.listen(8080, () => {
-    console.log("Server is listening on port 8080");
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../dist/index.html"));
+  });
+
+  const port = process.env.PORT || 8081;
+
+  app.listen(port, () => {
+    console.log("Server is listening on port " + port);
   });
 }
 

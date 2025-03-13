@@ -74,7 +74,7 @@ export default {
       const email = prompt("Indtast email for at logge ind");
       const auth = getAuth();
       const actionCodeSettings = {
-        url: `https://localhost/products/${this.$route.params.productId}`,
+        url: `https://vue-webshop-deployment.onrender.com/products/${this.$route.params.productId}`,
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
