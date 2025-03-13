@@ -6,11 +6,18 @@
     <div class="product-details">
       <h1>{{ product.name }}</h1>
       <h3 class="price">{{ product.price }}</h3>
-      <button @click="addToCart" class="add-to-cart" v-if="!itemIsInCart">
+      <button
+        @click="addToCart"
+        class="add-to-cart"
+        v-if="user && !itemIsInCart"
+      >
         Tilføj til kurv
       </button>
-      <button class="grey-button" v-if="itemIsInCart">
+      <button class="grey-button" v-if="user && itemIsInCart">
         Varen er allerede i kurven
+      </button>
+      <button class="sign-in" @click="signIn" v-if="!user">
+        Log ind for at tilføje til kurven
       </button>
     </div>
   </div>
@@ -20,11 +27,18 @@
 </template>
 
 <script>
+import {
+  getAuth,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+} from "firebase/auth";
 import axios from "axios";
 import NotFoundPage from "@/pages/NotFoundPage.vue";
 
 export default {
   name: "ProductDetailPage",
+  props: ["user"],
   data() {
     return {
       product: {},
@@ -38,27 +52,59 @@ export default {
       );
     },
   },
+  watch: {
+    async user(newUserValue) {
+      if (newUserValue) {
+        const cartResponse = await axios.get(
+          `/api/users/${newUserValue.uid}/cart`
+        );
+        const cartItems = cartResponse.data;
+        this.cartItems = cartItems;
+      }
+    },
+  },
   methods: {
     async addToCart() {
-      await axios.post("/api/users/12345/cart", {
+      await axios.post(`/api/users/${this.user.uid}/cart`, {
         id: this.$route.params.productId,
       });
       alert("Varen blev tilføjet til kurven!");
+    },
+    async signIn() {
+      const email = prompt("Indtast email for at logge ind");
+      const auth = getAuth();
+      const actionCodeSettings = {
+        url: `https://localhost/products/${this.$route.params.productId}`,
+        handleCodeInApp: true,
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      alert("Et login link blev sendt til din email");
+      window.localStorage.setItem("emailForSignIn", email);
     },
   },
   components: {
     NotFoundPage,
   },
   async created() {
+    const auth = getAuth();
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      const email = window.localStorage.getItem("emailForSignIn");
+      await signInWithEmailLink(auth, email, window.location.href);
+      alert("Du er nu logget ind!");
+      window.localStorage.removeItem("emailForSignIn");
+    }
+
     const response = await axios.get(
       `/api/products/${this.$route.params.productId}`
     );
     const product = response.data;
     this.product = product;
 
-    const cartResponse = await axios.get("/api/users/12345/cart");
-    const cartItems = cartResponse.data;
-    this.cartItems = cartItems;
+    if (this.user) {
+      const cartResponse = await axios.get(`/api/users/${this.user.uid}/cart`);
+      const cartItems = cartResponse.data;
+      this.cartItems = cartItems;
+    }
   },
 };
 </script>
