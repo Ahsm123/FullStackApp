@@ -15,22 +15,17 @@
 </template>
 
 <script>
-import { getAuth, signOut } from "firebase/auth";
+import { logout } from "@/services/authService";
 import logo from "@/assets/pizza-logo.png";
 
 export default {
   name: "NavBar",
   props: ["user"],
-  data() {
+  setup() {
     return {
       logo,
+      signOut: logout,
     };
-  },
-  methods: {
-    signOut() {
-      const auth = getAuth();
-      signOut(auth);
-    },
   },
 };
 </script>

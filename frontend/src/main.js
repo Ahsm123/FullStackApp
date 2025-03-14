@@ -1,51 +1,15 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import "./main.css";
-import * as VueRouter from "vue-router";
-import ShoppingCartPage from "./pages/ShoppingCartPage.vue";
-import ProductsPage from "./pages/ProductsPage.vue";
-import ProductDetailPage from "./pages/ProductDetailPage.vue";
-import NotFoundPage from "./pages/NotFoundPage.vue";
 import "bulma/css/bulma.css";
-import { initializeApp } from "firebase/app";
+import { createPinia } from "pinia";
+import router from "./router";
+import { firebaseApp } from "./config/firebaseConfig";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAcxBAQ_0itycUL61tTjEMoef8YY091VWs",
-  authDomain: "fullstackapp-d2708.firebaseapp.com",
-  projectId: "fullstackapp-d2708",
-  storageBucket: "fullstackapp-d2708.firebasestorage.app",
-  messagingSenderId: "220587584073",
-  appId: "1:220587584073:web:08d5b28f5c004719692d98",
-};
+const app = createApp(App);
 
-initializeApp(firebaseConfig);
+app.use(createPinia());
+app.use(router);
+app.mount("#app");
 
-createApp(App)
-  .use(
-    VueRouter.createRouter({
-      history: VueRouter.createWebHistory(process.env.BASE_URL),
-      routes: [
-        {
-          path: "/cart",
-          component: ShoppingCartPage,
-        },
-        {
-          path: "/products",
-          component: ProductsPage,
-        },
-        {
-          path: "/products/:productId",
-          component: ProductDetailPage,
-        },
-        {
-          path: "/",
-          redirect: "/products",
-        },
-        {
-          path: "/:pathMatch(.*)*",
-          component: NotFoundPage,
-        },
-      ],
-    })
-  )
-  .mount("#app");
+console.log("Firebase Initialized:", firebaseApp.name);

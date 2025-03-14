@@ -6,6 +6,7 @@
     <div class="product-details">
       <h1>{{ product.name }}</h1>
       <h3 class="price">{{ product.price }}</h3>
+
       <button
         @click="addToCart"
         class="add-to-cart"
@@ -27,84 +28,47 @@
 </template>
 
 <script>
-import {
-  getAuth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-} from "firebase/auth";
-import axios from "axios";
+import { ref, computed, onMounted, watch } from "vue";
+import { useCartStore } from "@/stores/cartStore";
+import { getProductById } from "@/services/productService";
 import NotFoundPage from "@/pages/NotFoundPage.vue";
 
 export default {
   name: "ProductDetailPage",
   props: ["user"],
-  data() {
-    return {
-      product: {},
-      cartItems: [],
-    };
-  },
-  computed: {
-    itemIsInCart() {
-      return this.cartItems.some(
-        (item) => item.id === this.$route.params.productId
-      );
-    },
-  },
-  watch: {
-    async user(newUserValue) {
-      if (newUserValue) {
-        const cartResponse = await axios.get(
-          `/api/users/${newUserValue.uid}/cart`
-        );
-        const cartItems = cartResponse.data;
-        this.cartItems = cartItems;
+  setup(props) {
+    const product = ref(null);
+    const cartStore = useCartStore();
+
+    onMounted(async () => {
+      product.value = await getProductById(props.$route.params.productId);
+      if (props.user) {
+        await cartStore.fetchCart(props.user.uid);
       }
-    },
-  },
-  methods: {
-    async addToCart() {
-      await axios.post(`/api/users/${this.user.uid}/cart`, {
-        id: this.$route.params.productId,
-      });
-      alert("Varen blev tilføjet til kurven!");
-    },
-    async signIn() {
-      const email = prompt("Indtast email for at logge ind");
-      const auth = getAuth();
-      const actionCodeSettings = {
-        url: `https://vue-webshop-deployment.onrender.com/products/${this.$route.params.productId}`,
-        handleCodeInApp: true,
-      };
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      alert("Et login link blev sendt til din email");
-      window.localStorage.setItem("emailForSignIn", email);
-    },
-  },
-  components: {
-    NotFoundPage,
-  },
-  async created() {
-    const auth = getAuth();
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      const email = window.localStorage.getItem("emailForSignIn");
-      await signInWithEmailLink(auth, email, window.location.href);
-      alert("Du er nu logget ind!");
-      window.localStorage.removeItem("emailForSignIn");
-    }
+    });
 
-    const response = await axios.get(
-      `/api/products/${this.$route.params.productId}`
+    watch(
+      () => props.user,
+      async (newUser) => {
+        if (newUser) {
+          await cartStore.fetchCart(newUser.uid);
+        }
+      }
     );
-    const product = response.data;
-    this.product = product;
 
-    if (this.user) {
-      const cartResponse = await axios.get(`/api/users/${this.user.uid}/cart`);
-      const cartItems = cartResponse.data;
-      this.cartItems = cartItems;
-    }
+    const itemIsInCart = computed(() =>
+      cartStore.cartItems.some(
+        (item) => item.id === props.$route.params.productId
+      )
+    );
+
+    const addToCart = async () => {
+      await cartStore.addItem(props.user.uid, props.$route.params.productId);
+      alert("Varen blev tilføjet til kurven!");
+    };
+
+    return { product, itemIsInCart, addToCart };
   },
+  components: { NotFoundPage },
 };
 </script>
