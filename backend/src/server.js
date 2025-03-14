@@ -1,107 +1,34 @@
 import express from "express";
-import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
 import path from "path";
+import { connectDB } from "./config/db.js";
+import productRoutes from "./routes/productRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import errorHandler from "./middlewares/errorHandler.js";
 
-async function execute() {
-  const url = `mongodb+srv://andershsm:BJ0YCrOZ43ZfhFN0@fullstackapp.ovs7h.mongodb.net/?retryWrites=true&w=majority&appName=FullStackApp`;
-  const client = new MongoClient(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    tls: true,
-  });
+dotenv.config();
+const app = express();
+app.use(express.json());
 
-  await client.connect();
-  const db = client.db("fsa-db");
+app.use("/images", express.static(path.join(__dirname, "../assets")));
+app.use(
+  express.static(path.resolve(__dirname, "../dist"), {
+    maxAge: "1y",
+    etag: false,
+  })
+);
 
-  const app = express();
-  app.use(express.json());
+app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
 
-  app.use("/images", express.static(path.join(__dirname, "../assets")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
 
-  app.use(
-    express.static(path.resolve(__dirname, "../dist"), {
-      maxAge: "1y",
-      etag: false,
-    })
-  );
+app.use(errorHandler);
 
-  //GET
-  app.get("/api/products", async (req, res) => {
-    const products = await db.collection("products").find({}).toArray();
-    res.json(products);
-  });
+const PORT = process.env.PORT || 8082;
 
-  async function populateCartIds(ids) {
-    return Promise.all(
-      ids.map((id) => db.collection("products").findOne({ id }))
-    );
-  }
-
-  app.get("/api/users/:userId/cart", async (req, res) => {
-    const user = await db
-      .collection("users")
-      .findOne({ id: req.params.userId });
-    const populatedCart = await populateCartIds(user?.cartItems || []);
-    res.json(populatedCart);
-  });
-
-  app.get("/api/products/:productId", async (req, res) => {
-    const productId = req.params.productId;
-    const product = await db.collection("products").findOne({ id: productId });
-    res.json(product);
-  });
-
-  // POST
-  app.post("/api/users/:userId/cart", async (req, res) => {
-    const userId = req.params.userId;
-    const productId = req.body.id;
-
-    const existingUser = await db.collection("users").findOne({ id: userId });
-
-    if (!existingUser) {
-      await db.collection("users").insertOne({ id: userId, cartItems: [] });
-    }
-
-    await db
-      .collection("users")
-      .updateOne({ id: userId }, { $addToSet: { cartItems: productId } });
-
-    const user = await db
-      .collection("users")
-      .findOne({ id: req.params.userId });
-
-    const populatedCart = await populateCartIds(user?.cartItems || []);
-    res.json(populatedCart);
-  });
-
-  //DELETE
-  app.delete("/api/users/:userId/cart/:productId", async (req, res) => {
-    const productId = req.params.productId;
-    const userId = req.params.userId;
-
-    await db.collection("users").updateOne(
-      { id: userId },
-      {
-        $pull: { cartItems: productId },
-      }
-    );
-
-    const user = await db
-      .collection("users")
-      .findOne({ id: req.params.userId });
-    const populatedCart = await populateCartIds(user?.cartItems || []);
-    res.json(populatedCart);
-  });
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../dist/index.html"));
-  });
-
-  const port = process.env.PORT;
-
-  app.listen(port, () => {
-    console.log("Server is listening on port " + port);
-  });
-}
-
-execute();
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+});
